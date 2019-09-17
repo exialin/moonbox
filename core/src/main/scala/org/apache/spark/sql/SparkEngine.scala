@@ -56,9 +56,11 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
   import SparkEngine._
 
   val sparkSession: SparkSession = createSparkSession()
+  // 伴生对象还有一个SparkContext成员
 
   import sparkSession.sessionState
 
+  // 根据spark.sql.permissions设置，若为false则mbAnalyzer为None
   private val mbAnalyzer = createColumnAnalyzer()
   private val mbOptimizer = new MbOptimizer(sparkSession)
 
@@ -156,6 +158,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
 
   /**
     * check all column is granted
+    * 被SparkEngine.sql调用
     *
     * @param plan analyzed plan
     * @return
@@ -251,6 +254,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
     val parsedPlan = parsePlan(sql)
     parsedPlan match {
       case runnable: RunnableCommand =>
+        // 哪些是RunnableCommand？
         val dataFrame = createDataFrame(runnable)
         (dataFrame.collect().toIterator, dataFrame.schema)
       case other =>
@@ -265,6 +269,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
           case insert: InsertIntoHiveTable =>
             insert
           case _ =>
+            // 加上了Limit节点
             GlobalLimit(
               Literal(maxRows, IntegerType),
               LocalLimit(Literal(maxRows, IntegerType),
@@ -282,6 +287,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
                 val dataTable = queryable.buildQuery(child, sparkSession)
                 (dataTable.iterator, dataTable.schema)
               case plan =>
+                // 可以重构到一个私有方法
                 val dataFrame = createDataFrame(plan)
                 (dataFrame.collect().toIterator, dataFrame.schema)
             }
@@ -329,6 +335,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
       case None => // do nothing
     }
 
+    // 创建不存在的表
     tables.filterNot { identifier =>
       identifier.database match {
         case Some(db) =>

@@ -8,15 +8,15 @@ cd ..
 (
 mvn clean package -Pdist -DskipTests \
 -Pmysql \
--Poracle \
--Psqlserver \
--Pkudu \
--Phbase \
--Pes \
--Ppresto \
--Pcassandra \
--Pmongo \
--Pclickhouse \
--Pkafka \
+# -Poracle \
+# -Psqlserver \
+# -Pkudu \
+# -Phbase \
+# -Pes \
+# -Ppresto \
+# -Pcassandra \
+# -Pmongo \
+# -Pclickhouse \
+# -Pkafka \
 )
 cd $current_dir

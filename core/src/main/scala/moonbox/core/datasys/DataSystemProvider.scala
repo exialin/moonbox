@@ -21,5 +21,6 @@
 package moonbox.core.datasys
 
 trait DataSystemProvider {
+	// 在DataSystem.lookupDataSystem方法中被调用
 	def createDataSystem(parameters: Map[String, String]): DataSystem
 }

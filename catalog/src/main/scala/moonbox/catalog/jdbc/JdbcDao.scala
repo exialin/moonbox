@@ -42,6 +42,7 @@ class JdbcDao(override val conf: MbConf) extends EntityComponent with MbLogging 
 	}
 
 	def action[R](action: DBIOAction[R, NoStream, Nothing]): Future[R] = {
+		// database是DatabaseComponent的伴生对象的成员，保证只有一个实例
 		database.run(action)
 	}
 

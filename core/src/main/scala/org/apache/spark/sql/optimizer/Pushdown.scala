@@ -107,6 +107,7 @@ class Pushdown(sparkSession: SparkSession) extends Rule[LogicalPlan] {
 		val childrenTreeNode = plan.children.map(buildDataSystemTree)
 		plan match {
 			case logical@LogicalRelation(relation, output, Some(catalogTable)) =>
+				// 表示一张表，LogicalRelation扩展了LeafNode类
 				MbTreeNode(logical,
 					DataSystem.lookupDataSystem(catalogTable.storage.properties), Nil)
 			case leaf: LeafNode =>
@@ -116,13 +117,15 @@ class Pushdown(sparkSession: SparkSession) extends Rule[LogicalPlan] {
 					case pushdown: Pushdownable if pushdown.isSupport(unary) =>
 						MbTreeNode(unary, childrenTreeNode.head.dataSystem, childrenTreeNode.map(SameDependency))
 					case _ =>
+            // 例如csv、hive、parquet、text对应的DataSystem不支持下推
 						MbTreeNode(unary, new SparkDataSystem(), childrenTreeNode.map(CrossDependency))
 				}
 			case join@Join(left, right, joinType, condition) =>
+				// Join是BinaryNode的子类
 				val left = childrenTreeNode.head.dataSystem
 				val right = childrenTreeNode.tail.head.dataSystem
 				(left, right) match {
-					case (l: Pushdownable, r: Pushdownable) if l.fastEquals(r) =>
+					case (l: Pushdownable, r: Pushdownable) if l.fastEquals(r) =>	// l和r是同一个数据源
 						if (l.isSupport(join)) {
 							val sqlConf = sparkSession.sessionState.conf
 							val leftChildCost = join.left.stats(sqlConf)
@@ -145,6 +148,7 @@ class Pushdown(sparkSession: SparkSession) extends Rule[LogicalPlan] {
 							childrenTreeNode.zip(Seq(leftDependency, rightDependency)).map { case (n, f) => f(n) })
 				}
 			case binary: BinaryNode =>
+				// 例如CoGroup、SetOperation
 				val left = childrenTreeNode.head.dataSystem
 				val right = childrenTreeNode.tail.head.dataSystem
 				(left, right) match {
@@ -197,6 +201,7 @@ class Pushdown(sparkSession: SparkSession) extends Rule[LogicalPlan] {
 	}
 
 	private def costUnderExpected(left: Statistics, right: Statistics): Boolean = {
+		// 为什么要循环？
 		val cost: Option[BigInt] = for (outer <- left.rowCount; inner <- right.rowCount) yield outer * inner
 		costJudge(cost)
 	}

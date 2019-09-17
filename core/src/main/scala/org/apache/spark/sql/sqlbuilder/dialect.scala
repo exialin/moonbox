@@ -91,6 +91,7 @@ trait MbDialect {
 	}
 
 	def joinSQL(p: Join, left: String, right: String, condition: String): String = {
+		// MbSqlBuilder伴生对象的方法
 		build(
 			left,
 			p.joinType.sql,

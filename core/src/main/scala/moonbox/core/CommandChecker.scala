@@ -23,6 +23,7 @@ package moonbox.core
 import moonbox.common.MbLogging
 import moonbox.core.command._
 
+// 在MoonboxSession.parsedCommand方法中被调用，检查用户权限
 object CommandChecker extends MbLogging {
 
 	private def require(condition: Boolean, message: String): Unit = {
@@ -34,6 +35,7 @@ object CommandChecker extends MbLogging {
 			case org: Organization =>
 				require(isRoot, "Only ROOT can do this command.")
 			case other =>
+				// ROOT只能进行organization相关的操作，不能进行查询
 				require(!isRoot,
 					"ROOT can only do organization relative commands.")
 				notOrganization(other, catalog)
@@ -47,6 +49,7 @@ object CommandChecker extends MbLogging {
 
 	private def notOrganization(cmd: MbCommand, catalog: MoonboxCatalog): Unit = cmd match {
 		case account: Account =>
+      // GRANT ACCOUNT命令需要有相应权限
 			require(catalog.catalogUser.account, "Permission denied.")
 
 		case ddl: DDL =>

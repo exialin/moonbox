@@ -42,6 +42,7 @@ object MbFunctionIdentifier {
 	def apply(func: String): MbFunctionIdentifier = new MbFunctionIdentifier(func)
 }*/
 
+// 没有用到
 case class ColumnIdentifier(
 	column: String,
 	table: String,

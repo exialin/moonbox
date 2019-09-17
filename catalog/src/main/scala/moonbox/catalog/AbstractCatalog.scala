@@ -37,6 +37,7 @@ abstract class AbstractCatalog extends ListenerBus[CatalogEventListener, Catalog
 	// ----------------------------------------------------------------------------
 	final def createApplication(
 		appDefinition: CatalogApplication)(implicit by: User): Unit = {
+		// 目前postToAll并没有作用，因为没有调用addListener添加监听器，后续会增加功能？
 		postToAll(CreateApplicationPreEvent(appDefinition.name))
 		doCreateApplication(appDefinition)
 		postToAll(CreateApplicationEvent(appDefinition.name))

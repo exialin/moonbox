@@ -37,7 +37,7 @@ abstract class DataSystem(props: Map[String, String]) {
 
 	def tableNames(): Seq[String]
 
-    def tableProperties(tableName: String): Map[String, String]
+	def tableProperties(tableName: String): Map[String, String]
 
 	def tableName(): String
 
@@ -46,6 +46,9 @@ abstract class DataSystem(props: Map[String, String]) {
 
 object DataSystem extends MbLogging {
 
+  // DataSystemProvider表示一种数据源类型，是一个创建DataSystem的工具（createDataSystem方法），Moonbox支持MySQL、Oracle等数据源
+	// DataSource表示一个数据源实例（的信息），一种数据源可能有多个实例
+	// 这些信息记录在下面两个Map中
 	private val registeredDataSystemProvider = {
 		val providers = new ConcurrentHashMap[String, DataSystemProvider]()
 		providers.put("spark", new SparkDataSystemProvider)
@@ -95,6 +98,7 @@ object DataSystem extends MbLogging {
 		})
 	}
 
+	// 在DataSystemRegister特质中被调用，扩展该特质的类都会自动调用这个方法注册
 	def registerDataSource(shortName: String, datasource: String): Unit = synchronized {
 		if (shortName != null) {
 			registeredDataSource.put(shortName, datasource)
@@ -102,6 +106,7 @@ object DataSystem extends MbLogging {
 		logInfo(s"registerDataSource: ($shortName, $datasource)")
 	}
 
+	// 在SparkEngine.registerDatasourceTable中被调用，即获取DataSource的信息便于创建外部表
 	def lookupDataSource(provider: String): String = {
 		val datasoruce = registeredDataSource.get(provider)
 		if (datasoruce == null) {

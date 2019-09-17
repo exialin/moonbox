@@ -73,12 +73,14 @@ class Runner(
 			case event: AlterTimedEventSetEnable =>
 				alterTimedEvent(event, manager)
 			case runnable: MbRunnableCommand =>
+				// 其他DDL、DML、DCL命令
 				val result = runnable.run(mbSession)
 				DirectResult(runnable.outputSchema, result.map(_.toSeq))
 			case CreateTempView(table, query, isCache, replaceIfExists) =>
 				createTempView(table, query, isCache, replaceIfExists)
 				DirectResult(SchemaUtil.emptyJsonSchema, Seq.empty)
 			case other: Statement =>
+        // 查询语句对应的case，包括：SELECT | WITH | INSERT | SET | ANALYZE | REFRESH
 				statement(other.sql)
 			case other =>
 				throw new Exception(s"Unsupport command $other")
@@ -201,6 +203,7 @@ class Runner(
 		data
 	}
 
+	// 暂存结果
 	private def initCurrentData(dataFrame: DataResult): QueryResult = {
 		currentRowId = 0
 		currentData = dataFrame._1

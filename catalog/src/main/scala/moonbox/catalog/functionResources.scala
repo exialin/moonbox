@@ -28,6 +28,7 @@ import moonbox.common.exception.UnsupportedException
 	override def toString: String = `type`
 }*/
 trait FunctionResourceType {
+	// type是Scala关键字，所以用反引号括起来
 	val `type`: String
 }
 
@@ -64,10 +65,12 @@ object FunctionResourceType {
 	}
 }
 
+// uri记录了资源的位置
 case class FunctionResource(resourceType: FunctionResourceType, uri: String)
 
 object FunctionResource {
 	def apply(resourceType: String, resource: String): FunctionResource = {
+		// 调用FunctionResource的主构造器
 		apply(FunctionResourceType.fromString(resourceType), resource)
 	}
 }

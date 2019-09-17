@@ -135,6 +135,7 @@ case class UnmountDatabase(
 		import mbSession.catalog._
 		val existDatabase = getDatabase(name)
 		if (existDatabase.isLogical) {
+			// CREATE DATABASE命令创建的逻辑库
 			throw new UnsupportedOperationException(
 				s"Database $name is logical. Please use DROP DATABASE command.")
 		} else {

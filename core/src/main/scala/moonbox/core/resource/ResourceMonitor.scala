@@ -28,6 +28,7 @@ import org.apache.spark.sql.SparkEngine
 import org.apache.spark.sql.resource.{SparkResourceListener, SparkResourceMonitor}
 
 
+// 目前没有被用到
 class ResourceMonitor(sparkContext: SparkContext) {
 	val sparkListener = new SparkResourceListener(sparkContext.getConf)
 	sparkContext.addSparkListener(sparkListener)

@@ -41,6 +41,7 @@ import scala.collection.mutable.ArrayBuffer
 class MysqlDataSystem(props: Map[String, String])
 	extends DataSystem(props) with Pushdownable with Insertable with Updatable with MbLogging {
 
+  // 检查props中必须要有这几个属性
 	checkOptions("type", "url", "user", "password")
 
 	override val supportedOperators: Seq[Class[_]] = Seq(
@@ -118,6 +119,8 @@ class MysqlDataSystem(props: Map[String, String])
 	private def getConnection: () => Connection = {
 		val p = new Properties()
 		props.foreach { case (k, v) => p.put(k, v) }
+    // 这里定义了一个匿名方法，参数是url和props
+		// 为什么要以这种形式实现？直接返回Connection就好了
 		((url: String, props: Properties) => {
 			() => {
 				Class.forName("com.mysql.jdbc.Driver")
@@ -181,11 +184,13 @@ class MysqlDataSystem(props: Map[String, String])
 			}
 		}
 
+		// JdbcUtils是Spark的对象
 		val iter = JdbcUtils.resultSetToRows(resultSet, schema)
+		// close后面为什么要加_？
 		new DataTable(iter, schema, close _)
 	}
 
-    override def tableNames(): Seq[String] = {
+	override def tableNames(): Seq[String] = {
 		val tables = new ArrayBuffer[String]()
 		val connection = getConnection()
 		val resultSet = connection.createStatement().executeQuery("show tables")
@@ -196,11 +201,11 @@ class MysqlDataSystem(props: Map[String, String])
 		tables
 	}
 
-    override def tableProperties(tableName: String): Map[String, String] = {
+	override def tableProperties(tableName: String): Map[String, String] = {
 		props.+("dbtable" -> tableName)
 	}
 	// TODO
-    override def insert(table: DataTable, saveMode: SaveMode): Unit = {
+	override def insert(table: DataTable, saveMode: SaveMode): Unit = {
 		throw new Exception("Unsupport operation: insert with datatalbe.")
 	}
 

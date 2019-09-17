@@ -79,6 +79,7 @@ case class ShowTables(
 
 		val result = new ArrayBuffer[Row]()
 
+		// getCurrentDb是mbSession.catalog的方法
 		val db = database.getOrElse(getCurrentDb)
 
 		// tables
@@ -453,6 +454,7 @@ case class Explain(query: String, extended: Boolean = false) extends MbRunnableC
 	}
 }
 
+// 注意下面的类扩展的是MbCommand，在Runner.query方法中会进入不同的case
 case class MQLQuery(query: String) extends MbCommand with DML
 
 case class CreateTempView(
@@ -487,4 +489,5 @@ object InsertMode extends Enumeration {
 	val Merge = Value
 }
 
+// 见MqlBase.g4中statement的定义，即以(SELECT | WITH | INSERT | SET | ANALYZE | REFRESH)开头的语句
 case class Statement(sql: String) extends MbCommand with DML

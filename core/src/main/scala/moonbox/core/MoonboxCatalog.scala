@@ -28,7 +28,8 @@ import moonbox.common.{MbConf, MbLogging}
 
 
 class MoonboxCatalog(val conf: MbConf) extends MbLogging {
-	
+
+	// 这里用AbstractCatalog更好，可以提供不同的实现
 	private val jdbcCatalog = new JdbcCatalog(conf)
 
 	private implicit var userInSession: User = _
@@ -62,6 +63,7 @@ class MoonboxCatalog(val conf: MbConf) extends MbLogging {
 		}
 	}
 
+	// 有多线程的情况？
 	def getCurrentDb: String = synchronized { currentDb }
 
 	def getCurrentOrg: String = synchronized { catalogOrg.name }
@@ -391,6 +393,7 @@ class MoonboxCatalog(val conf: MbConf) extends MbLogging {
 		jdbcCatalog.close()
 	}
 
+	// 没有被调用过
 	def addListener(listener: CatalogEventListener): Unit = {
 		jdbcCatalog.addListener(listener)
 	}

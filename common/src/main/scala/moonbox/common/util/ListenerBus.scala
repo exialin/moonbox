@@ -45,6 +45,7 @@ trait ListenerBus[L <: AnyRef, E] extends MbLogging {
 		while (iter.hasNext) {
 			val listener: L = iter.next()
 			try {
+				// AbstractCatalog的实现是：listener.onEvent(event)
 				doPostEvent(listener, event)
 			} catch {
 				case NonFatal(e) =>
@@ -55,6 +56,7 @@ trait ListenerBus[L <: AnyRef, E] extends MbLogging {
 
 	protected def doPostEvent(listener: L, event: E): Unit
 
+	// 没有被用到
 	def findListenersByClass[T <: L : ClassTag](): Seq[T] = {
 		val c: Class[_] = implicitly[ClassTag[T]].runtimeClass
 		listeners.asScala.filter(_.getClass == c).map(_.asInstanceOf[T])

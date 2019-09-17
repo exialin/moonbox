@@ -42,6 +42,7 @@ class SparkDataSystem extends DataSystem(Map()) with Pushdownable {
 	override val beGoodAtOperators: Seq[Class[_]] = Seq()
 	override val supportedJoinTypes: Seq[JoinType] = Seq()
 
+	// 重写Pushdownable的方法
 	override def buildScan(plan: LogicalPlan, sparkSession: SparkSession): DataFrame = {
 		Dataset.ofRows(sparkSession, plan)
 	}

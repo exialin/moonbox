@@ -55,6 +55,7 @@ import org.apache.spark.sql.sqlbuilder.MbDialect
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
+// 从Spark复制过来的
 /**
   * Instructions on how to partition the table among workers.
   */
@@ -64,6 +65,7 @@ private[sql] case class JDBCPartitioningInfo(
 	upperBound: Long,
 	numPartitions: Int)
 
+// 参见Spark的JDBCRelation
 private[sql] object MbJDBCRelation extends Logging {
 	/**
 	  * Given a partitioning schematic (a column of integral type, a number of

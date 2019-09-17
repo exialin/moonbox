@@ -91,6 +91,7 @@ class Main(
 	appType: ApplicationType
 ) extends MbActor with LogMessage with MbLogging {
 
+	// 隐式参数哪里被用到？
 	private implicit val executionContext: ExecutionContext = {
 		ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 	}
@@ -100,6 +101,7 @@ class Main(
 	private var connected = false
 	private var connectionAttemptCount = 0
 
+	// 用一个Map记录不同session对应的Runner
 	private val sessionIdToRunner = new scala.collection.mutable.HashMap[String, Runner]
 
 	private var registerToMasterScheduler: Option[Cancellable] = None
@@ -145,6 +147,7 @@ class Main(
 		case open @ OpenSession(org, username, database, sessionConfig) =>
 			val requester = sender()
 			val sessionId = newSessionId
+			// 新建一个Session就是新建一个Runner，其中包含了一个MoonboxSession实例，将这个Runner对象保存在Map中
 			val f = Future(new Runner(sessionId, org, username, database, conf, sessionConfig, self))
 			f.onComplete {
 				case Success(runner) =>

@@ -21,9 +21,11 @@
 package moonbox.core.datasys
 
 import org.apache.spark.sql.SaveMode
+// SaveMode是Spark的枚举类型
 
 import scala.collection.mutable
 
+// 没有被用到
 class DataTableWriter(dt: DataTable) {
 	private var source: String = _
 	private var mode: SaveMode = SaveMode.ErrorIfExists

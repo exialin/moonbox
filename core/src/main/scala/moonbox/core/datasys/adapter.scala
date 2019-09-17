@@ -27,6 +27,7 @@ import org.apache.spark.sql.catalyst.plans.logical.{Join, LogicalPlan}
 import org.apache.spark.sql.execution.aggregate.ScalaUDAF
 import org.apache.spark.sql.types.StructType
 
+// 这里self是什么意思？
 trait Pushdownable { self: DataSystem =>
 	val supportedOperators: Seq[Class[_]]
 	val supportedJoinTypes: Seq[JoinType]
@@ -38,6 +39,7 @@ trait Pushdownable { self: DataSystem =>
 		beGoodAtOperators.contains(operator)
 	}
 
+	// 只有SparkDataSystem是true，其他都是false
 	def isSupportAll: Boolean
 
 	def isSupport(plan: LogicalPlan): Boolean = {
@@ -50,6 +52,7 @@ trait Pushdownable { self: DataSystem =>
 		}
 	}
 
+	// 遍历逻辑计划的所有表达式，若全部支持，则返回true
 	private def allExpressionSupport(plan: LogicalPlan): Boolean = {
 		def traverseExpression(expression: Expression): Boolean ={
 			expression match {
@@ -70,8 +73,11 @@ trait Pushdownable { self: DataSystem =>
 
 	def fastEquals(other: DataSystem): Boolean
 
+	// 在Pushdown.replacePushdownSubtree方法中被调用，针对部分下推的情况，这时需要从数据源拉取数据作为Spark
+	// 的DataFrame，而且会进行计划树的替换
 	def buildScan(plan: LogicalPlan, sparkSession: SparkSession): DataFrame
 
+	// 在SparkEngine.sql中被调用，针对可以完全下推到数据源的情况，返回类型是DataTable
 	def buildQuery(plan: LogicalPlan, sparkSession: SparkSession): DataTable
 }
 

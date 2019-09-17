@@ -49,6 +49,7 @@ class MoonboxSession(
 		engine.cancelJobGroup(jobLabel)
 	}
 
+	// 用Moonbox实现的解析器对SQL进行解析，返回MbCommand对象
 	def parsedCommand(sql: String): MbCommand = {
 		val command = parser.parsePlan(sql)
 		CommandChecker.check(command, catalog)

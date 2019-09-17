@@ -30,6 +30,7 @@ import org.apache.spark.util.NextIterator
 import scala.reflect.ClassTag
 
 
+// 在各个DataSystem子类的buildScan方法中被创建
 // so far, we don't support partial aggregate function pushdown.
 // so that rdd contains only one partition.
 // this class may be changed when we implement partial aggregate function pushdown

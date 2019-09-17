@@ -13,6 +13,7 @@ import scala.collection.mutable
 
 class ColumnAnalysis(catalog: MoonboxCatalog) extends Rule[LogicalPlan] {
 
+	// 检查库、表、列的权限
 	override def apply(plan: LogicalPlan): LogicalPlan = {
 
 		if (catalog.catalogUser.isSA) {
@@ -110,7 +111,7 @@ class ColumnAnalysis(catalog: MoonboxCatalog) extends Rule[LogicalPlan] {
 		f(plan)
 		plan match {
 			case view: View =>
-			case p => plan.children.foreach(foreach(_)(f))
+			case p => plan.children.foreach(foreach(_)(f))		// 递归处理子节点
 		}
 	}
 }
