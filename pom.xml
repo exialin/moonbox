@@ -50,6 +50,7 @@
         <module>external/kafka-adapter</module>
         <module>external/moonbox-zeppelin-interpreter-0.7</module>
         <module>external/moonbox-zeppelin-interpreter-0.8</module>
+        <module>external/postgresql-adapter</module>
 
         <module>applications/spark-batch</module>
         <module>applications/spark-interactive</module>

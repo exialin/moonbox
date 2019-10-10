@@ -6,17 +6,19 @@ cd $script_dir
 cd ..
 ###please add your own extra modules
 (
-mvn clean package -Pdist -DskipTests \
+#mvn clean package -Pdist -DskipTests \
+mvn package -Pdist -DskipTests \
 -Pmysql \
--Poracle \
--Psqlserver \
--Pkudu \
--Phbase \
--Pes \
--Ppresto \
--Pcassandra \
--Pmongo \
--Pclickhouse \
--Pkafka \
+-Ppostgresql \
+#-Poracle \
+#-Psqlserver \
+#-Pkudu \
+#-Phbase \
+#-Pes \
+#-Ppresto \
+#-Pcassandra \
+#-Pmongo \
+#-Pclickhouse \
+#-Pkafka \
 )
 cd $current_dir

@@ -185,7 +185,7 @@ class MysqlDataSystem(props: Map[String, String])
 		new DataTable(iter, schema, close _)
 	}
 
-    override def tableNames(): Seq[String] = {
+	override def tableNames(): Seq[String] = {
 		val tables = new ArrayBuffer[String]()
 		val connection = getConnection()
 		val resultSet = connection.createStatement().executeQuery("show tables")
@@ -196,11 +196,11 @@ class MysqlDataSystem(props: Map[String, String])
 		tables
 	}
 
-    override def tableProperties(tableName: String): Map[String, String] = {
+	override def tableProperties(tableName: String): Map[String, String] = {
 		props.+("dbtable" -> tableName)
 	}
 	// TODO
-    override def insert(table: DataTable, saveMode: SaveMode): Unit = {
+	override def insert(table: DataTable, saveMode: SaveMode): Unit = {
 		throw new Exception("Unsupport operation: insert with datatalbe.")
 	}
 
