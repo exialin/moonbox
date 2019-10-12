@@ -69,6 +69,8 @@ trait EntityComponent extends DatabaseComponent {
 	protected final val columnPrivileges = TableQuery[ColumnPrivilegeEntityTable]
 	protected final val variables = TableQuery[VariableEntityTable]
 	protected final val applications = TableQuery[ApplicationEntityTable]
+	protected final val groups = TableQuery[GroupEntityTable]
+	protected final val groupUserRels = TableQuery[GroupUserRelEntityTable]
 
 	protected final val tableQueries = Seq(
 		databases,
@@ -83,7 +85,9 @@ trait EntityComponent extends DatabaseComponent {
 		tablePrivileges,
 		columnPrivileges,
 		variables,
-		applications
+		applications,
+		groups,
+		groupUserRels
 	)
 
 	abstract class BaseTable[T](tag: Tag, desc: String) extends Table[T](tag, desc) {
@@ -247,9 +251,24 @@ trait EntityComponent extends DatabaseComponent {
 		def name = column[String]("name")
 		def labels = column[Seq[String]]("labels")
 		def appType = column[String]("appType")
+		def state = column[String]("state")
 		def config = column[Map[String, String]]("config")
-		override def * = (id.?, name, labels, appType, config, createBy, createTime, updateBy, updateTime) <> (ApplicationEntity.tupled, ApplicationEntity.unapply)
+		override def * = (id.?, name, labels, appType, config, state, createBy, createTime, updateBy, updateTime) <> (ApplicationEntity.tupled, ApplicationEntity.unapply)
 	}
+
+	class GroupEntityTable(tag: Tag) extends BaseTable[GroupEntity](tag, "groups") {
+		def name = column[String]("name")
+		def organizationId = column[Long]("organizationId")
+		def description = column[Option[String]]("description")
+		override def * = (id.?, name, organizationId, description, createBy, createTime, updateBy, updateTime) <> (GroupEntity.tupled, GroupEntity.unapply)
+	}
+
+	class GroupUserRelEntityTable(tag: Tag) extends BaseTable[GroupUserRelEntity](tag, "group_user_rels") {
+		def groupId = column[Long]("groupId")
+		def userId = column[Long]("userId")
+		override def * = (id.?, groupId, userId, createBy, createTime, updateBy, updateTime) <> (GroupUserRelEntity.tupled, GroupUserRelEntity.unapply)
+	}
+
 }
 
 object EntityComponent {

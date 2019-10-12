@@ -126,41 +126,6 @@ case class RenameFunctionEvent(
 	function: String,
 	newFunction: String) extends FunctionEvent
 
-
-trait ViewEvent extends DatabaseEvent
-
-case class CreateViewPreEvent(
-	organization: String,
-	database: String,
-	view: String) extends ViewEvent
-
-case class CreateViewEvent(
-	organization: String,
-	database: String,
-	view: String) extends ViewEvent
-
-case class DropViewPreEvent(
-	organization: String,
-	database: String,
-	view: String) extends ViewEvent
-
-case class DropViewEvent(
-	organization: String,
-	database: String,
-	view: String) extends ViewEvent
-
-case class RenameViewPreEvent(
-	organization: String,
-	database: String,
-	view: String,
-	newView: String) extends ViewEvent
-
-case class RenameViewEvent(
-	organization: String,
-	database: String,
-	view: String,
-	newView: String) extends ViewEvent
-
 trait ApplicationEvent extends CatalogEvent
 
 case class CreateApplicationPreEvent(
@@ -370,4 +335,57 @@ case class DropColumnPrivilegeEvent(
 	privileges: Seq[(String, Seq[String])]) extends ColumnPrivilegeEvent
 
 
+trait GroupEvent extends CatalogEvent
+
+case class CreateGroupPreEvent(
+	organization: String,
+	group: String) extends GroupEvent
+
+case class CreateGroupEvent(
+	organization: String,
+	group: String) extends GroupEvent
+
+case class DropGroupPreEvent(
+	organization: String,
+	group: String) extends GroupEvent
+
+case class DropGroupEvent(
+	organization: String,
+	group: String) extends GroupEvent
+
+case class RenameGroupPreEvent(
+	organization: String,
+	group: String,
+	newGroup: String
+) extends GroupEvent
+
+case class RenameGroupEvent(
+	organization: String,
+	group: String,
+	newGroup: String
+) extends GroupEvent
+
+case class CreateGroupUserRelPreEvent(
+	organization: String,
+	group: String,
+	users: Seq[String]
+) extends GroupEvent
+
+case class CreateGroupUserRelEvent(
+	organization: String,
+	group: String,
+	users: Seq[String]
+) extends GroupEvent
+
+case class DropGroupUserRelPreEvent(
+	organization: String,
+	group: String,
+	users: Seq[String]
+) extends GroupEvent
+
+case class DropGroupUserRelEvent(
+	organization: String,
+	group: String,
+	users: Seq[String]
+) extends GroupEvent
 

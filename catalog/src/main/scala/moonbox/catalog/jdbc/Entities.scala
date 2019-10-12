@@ -198,6 +198,26 @@ case class ApplicationEntity(
 	labels: Seq[String],
 	appType: String,
 	config: Map[String, String],
+	state: String,
+	createBy: Long,
+	createTime: Long = Utils.now,
+	updateBy: Long,
+	updateTime: Long = Utils.now) extends CatalogEntity
+
+case class GroupEntity(
+	id: Option[Long] = None,
+	name: String,
+	organizationId: Long,
+	description: Option[String],
+	createBy: Long,
+	createTime: Long = Utils.now,
+	updateBy: Long,
+	updateTime: Long = Utils.now) extends CatalogEntity
+
+case class GroupUserRelEntity(
+	id: Option[Long] = None,
+	groupId: Long,
+	userId: Long,
 	createBy: Long,
 	createTime: Long = Utils.now,
 	updateBy: Long,

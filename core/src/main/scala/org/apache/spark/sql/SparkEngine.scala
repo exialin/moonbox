@@ -49,6 +49,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.spark_project.guava.util.concurrent.Striped
 
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.JavaConverters._
 
 
 class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
@@ -63,6 +64,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
   // 根据spark.sql.permissions设置，若为false则mbAnalyzer为None
   private val mbAnalyzer = createColumnAnalyzer()
   private val mbOptimizer = new MbOptimizer(sparkSession)
+	private val collectThreshold = conf.get("spark.sql.resultThreshold.", 100000)
 
   /**
     * create sparkSession with inject hive rules and strategies for hive tables
@@ -153,7 +155,19 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
     * @return resolved logical plan
     */
   def analyzePlan(plan: LogicalPlan): LogicalPlan = {
-    sessionState.analyzer.execute(plan)
+    val analyzed = sessionState.analyzer.execute(plan)
+    sparkSession.sessionState.analyzer.checkAnalysis(analyzed)
+    analyzed
+  }
+
+  /**
+    * check resolved logical plan
+    *
+    * @param plan resolved logical plan
+    * @return resolved logical plan
+    */
+  def checkAnalysis(plan: LogicalPlan): Unit = {
+    sparkSession.sessionState.analyzer.checkAnalysis(plan)
   }
 
   /**
@@ -252,6 +266,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
 
   def sql(sql: String, maxRows: Int = 100): (Iterator[Row], StructType) = {
     val parsedPlan = parsePlan(sql)
+		val unlimited = maxRows < 0
     parsedPlan match {
       case runnable: RunnableCommand =>
         // 哪些是RunnableCommand？
@@ -259,7 +274,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
         (dataFrame.collect().toIterator, dataFrame.schema)
       case other =>
         injectTableFunctions(parsedPlan)
-        // may throw ColumnAnalysisException
+        // may throw PrivilegeAnalysisException
         val analyzedPlan = checkColumns(analyzePlan(parsedPlan))
         val limitPlan = analyzedPlan match {
           case insert: InsertIntoDataSourceCommand =>
@@ -268,12 +283,14 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
             insert
           case insert: InsertIntoHiveTable =>
             insert
-          case _ =>
+					case _ if unlimited =>
+						analyzedPlan
+					case _ =>
             // 加上了Limit节点
-            GlobalLimit(
-              Literal(maxRows, IntegerType),
-              LocalLimit(Literal(maxRows, IntegerType),
-                analyzedPlan))
+						GlobalLimit(
+							Literal(maxRows, IntegerType),
+							LocalLimit(Literal(maxRows, IntegerType),
+								analyzedPlan))
         }
 
         val optimizedPlan = optimizePlan(limitPlan)
@@ -289,25 +306,37 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
               case plan =>
                 // 可以重构到一个私有方法
                 val dataFrame = createDataFrame(plan)
-                (dataFrame.collect().toIterator, dataFrame.schema)
+                (collectWithTryCatch(dataFrame, unlimited), dataFrame.schema)
             }
           } catch {
             case e: Exception if e.getMessage != null && e.getMessage.contains("cancelled") =>
               throw e
             case e: Exception if pushdownEnable =>
               logError("Execute pushdown failed, Retry without pushdown optimize.", e)
-              // using sql instead of logical plan to create dataFrame.
-              // because in some case will throw exception that spark.sql.execution.id is already set.
               val dataFrame = createDataFrame(optimizedPlan)
-              (dataFrame.collect().toIterator, dataFrame.schema)
+              (collectWithTryCatch(dataFrame, unlimited), dataFrame.schema)
           }
         } else {
           val dataFrame = createDataFrame(optimizedPlan)
-          (dataFrame.collect().toIterator, dataFrame.schema)
+          (collectWithTryCatch(dataFrame, unlimited), dataFrame.schema)
         }
 
     }
   }
+
+	private def collectWithTryCatch(dataFrame: DataFrame, unlimited: Boolean): Iterator[Row] = {
+		try {
+			if (unlimited) {
+				dataFrame.toLocalIterator().asScala
+			} else {
+				dataFrame.collect().toIterator
+			}
+		} catch {
+			case e: OutOfMemoryError =>
+				logError("collect cause OutOfMemoryError", e)
+				throw new RuntimeException(e)
+		}
+	}
 
   /**
     * if pushdown enable
@@ -615,6 +644,12 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
     val options = props.map { case (k, v) => s"'$k' '$v'" }.mkString(",")
     val schema = props.get("schema").map(s => s"($s)").getOrElse("")
 
+//    props.keys.foreach(key => {
+//      if (key != "path" && key != "schema" && key != "type") {
+//        sessionState.conf.setConfString(key, props(key))
+//      }
+//    })
+
     // for compatibility
     val partition = props.get("partitionColumns").orElse(
       props.get("partitionColumnNames")).map(s => s"PARTITIONED BY ($s)").getOrElse("")
@@ -642,7 +677,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
     val hivePartitions = hiveClient.getPartitions(hiveCatalogTable)
     props.keys.foreach(key => {
       if (key.startsWith("spark.hadoop")) {
-        sparkContext.hadoopConfiguration.set(key.stripPrefix("spark.hadoop."), props(key))
+        sessionState.conf.setConfString(key.stripPrefix("spark.hadoop."), props(key))
       }
     })
     sessionState.catalog.createTable(hiveCatalogTable.copy(
@@ -730,13 +765,13 @@ object SparkEngine extends MbLogging {
 
   private val hivePostHocResolutionRule = Seq[RuleBuilder](
     (session: SparkSession) => new DetermineTableStats(session),
-    (session: SparkSession) => CatalogRelationConversions(sQLConf(session), session),
+    (session: SparkSession) => CatalogRelationConversions(sqlConf(session), session),
     (session: SparkSession) => PreprocessTableCreation(session),
-    (session: SparkSession) => PreprocessTableInsertion(sQLConf(session)),
+    (session: SparkSession) => PreprocessTableInsertion(sqlConf(session)),
     (session: SparkSession) => HiveAnalysis
   )
 
-  private def sQLConf(session: SparkSession): SQLConf = {
+  private def sqlConf(session: SparkSession): SQLConf = {
     val conf = new SQLConf()
     session.sparkContext.conf.getAll.foreach { case (k, v) =>
       conf.setConfString(k, v)

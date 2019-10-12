@@ -911,31 +911,85 @@ class JdbcDao(override val conf: MbConf) extends EntityComponent with MbLogging 
 		)
 	}
 
+	// -----------------------------------------------------------------
+	// group
+	// -----------------------------------------------------------------
+
+	def createGroup(group: GroupEntity) = {
+		insert[GroupEntity, GroupEntityTable](group, groups)
+	}
+
+	def deleteGroup(groupId: Long) = {
+		delete[GroupEntity, GroupEntityTable](groups, _.id === groupId)
+	}
+
+	def renameGroup(organizationId: Long, group: String, newGroup: String)(updateBy: Long) = {
+		update[GroupEntity, GroupEntityTable,
+				(Rep[String], Rep[Long], Rep[Long]), (Rep[String], Rep[Long], Rep[Long]),
+				(String, Long, Long)](
+			groups, t => t.organizationId === organizationId && t.name === group,
+			t => (t.name, t.updateBy, t.updateTime), (newGroup, updateBy, Utils.now)
+		)
+	}
+
+	def updateGroup(groupDefinition: GroupEntity) = {
+		updateEntity[GroupEntity, GroupEntityTable](
+			groups, t => t.id === groupDefinition.id.get, groupDefinition
+		)
+	}
+
+	def getGroup(groupId: Long) = {
+		queryOneOption[GroupEntity, GroupEntityTable](groups, _.id === groupId)
+	}
+
+	def getGroup(organizationId: Long, group: String) = {
+		queryOneOption[GroupEntity, GroupEntityTable](
+			groups, t => t.organizationId === organizationId && t.name === group)
+	}
+
+	def groupExists(groupId: Long) = {
+		exists[GroupEntity, GroupEntityTable](groups, _.id === groupId)
+	}
+
+	def groupExists(organizationId: Long, group: String) = {
+		exists[GroupEntity, GroupEntityTable](groups, t => t.organizationId === organizationId && t.name === group)
+	}
+
+	def listGroups(organizationId: Long) = {
+		query[GroupEntity, GroupEntityTable](groups, _.organizationId === organizationId)
+	}
+
+	def listGroups(organizationId: Long, pattern: String) = {
+		query[GroupEntity, GroupEntityTable](groups, t => t.organizationId === organizationId && t.name.like(pattern))
+	}
+
+	def createGroupUserRel(rels: GroupUserRelEntity*) = {
+		insertMultiple[GroupUserRelEntity, GroupUserRelEntityTable](rels, groupUserRels)
+	}
+
+	def deleteGroupUserRels(groupId: Long, userIds: Seq[Long]) = {
+		delete[GroupUserRelEntity, GroupUserRelEntityTable](
+			groupUserRels,
+			rel => rel.groupId === groupId && rel.userId.inSet(userIds))
+	}
+
+	def deleteGroupUserRelsByGroup(groupId: Long) = {
+		delete[GroupUserRelEntity, GroupUserRelEntityTable](
+			groupUserRels,
+			rel => rel.groupId === groupId)
+	}
+
+	def deleteGroupUserRelsByUser(userId: Long) = {
+		delete[GroupUserRelEntity, GroupUserRelEntityTable](
+			groupUserRels,
+			rel => rel.userId === userId)
+	}
+
+	def getGroupUserRelsByGroup(groupId: Long) = {
+		query[GroupUserRelEntity, GroupUserRelEntityTable](
+			groupUserRels,
+			_.groupId === groupId
+		)
+	}
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
