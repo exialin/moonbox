@@ -30,6 +30,7 @@ import scala.collection.JavaConverters._
 
 abstract class DataSystem(props: Map[String, String]) {
 
+	// 子类会调用这个方法检查options中是否有必填的属性
 	protected def checkOptions(params: String*): Unit = {
 		val message = s"${params.mkString(", ")} must be in options."
 		require(params.forall(props.contains), message)

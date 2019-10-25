@@ -62,6 +62,7 @@ class DataFetchServerProtoHandler(sessionIdToJobRunner: mutable.Map[String, Runn
       sessionIdToJobRunner.get(sessionId) match {
         case Some(runner) =>
           val response = try {
+            // 取出fetchSize大小的数据
             val resultData = runner.fetchResultData()
             ProtoOutboundMessageBuilder.interactiveNextResultOutbound(null, sessionId, resultData.schema, resultData.data, resultData.hasNext)
           } catch {

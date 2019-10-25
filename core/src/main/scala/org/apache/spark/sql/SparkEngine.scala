@@ -61,7 +61,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
 
   import sparkSession.sessionState
 
-  // 根据spark.sql.permissions设置，若为false则mbAnalyzer为None
+  // 根据spark.sql.permissions设置，若为false则mbAnalyzer为None，若为true则创建MbAnalyzer对象
   private val mbAnalyzer = createColumnAnalyzer()
   private val mbOptimizer = new MbOptimizer(sparkSession)
 	private val collectThreshold = conf.get("spark.sql.resultThreshold.", 100000)
@@ -76,6 +76,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
     SparkSession.clearActiveSession()
 
     val builder = SparkSession.builder().sparkContext(getSparkContext(conf))
+    // 会创建/tmp/spark-warehouse目录
     builder.config(StaticSQLConf.WAREHOUSE_PATH.key,
       "file://" + Utils.getMoonboxHomeOption.getOrElse("/tmp") + File.separator +
         "spark-warehouse" + File.separator + mbCatalog.getCurrentOrg)
@@ -140,6 +141,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
 
   /**
     * parse sql text to unresolved logical plan
+    * 利用Spark的解析器解析SQL语句，生成逻辑计划
     *
     * @param sql origin sql
     * @return unresolved logical plan
@@ -162,6 +164,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
 
   /**
     * check resolved logical plan
+    * 被Servicer.verify调用
     *
     * @param plan resolved logical plan
     * @return resolved logical plan
@@ -172,7 +175,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
 
   /**
     * check all column is granted
-    * 被SparkEngine.sql调用
+    * 被SparkEngine.sql和Servicer.verify调用
     *
     * @param plan analyzed plan
     * @return
@@ -203,6 +206,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
 
   /**
     * rewrite logical plan, to collect unresolved relation and function
+    * 被injectTableFunctions调用
     *
     * @param plan parsed logical plan
     * @return logical plan with CTE Substituted
@@ -386,6 +390,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
 
   /**
     * find tables in sql
+    * 被Servicer.resources调用
     *
     * @param sql sql
     * @return output table, input tables
@@ -401,6 +406,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
     }
   }
 
+  // 被Servicer.resources调用
   def unresolvedFunctionsInSQL(sql: String): Seq[FunctionIdentifier] = {
     unresolvedFunctions(rewrite(parsePlan(sql)))
   }
@@ -415,6 +421,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
     plan match {
       // TODO other statement
       case insert: InsertIntoTable =>
+        // 包括INSERT的目标表和SELECT子句中的表
         val table = insert.table.asInstanceOf[UnresolvedRelation].tableIdentifier
         table +: unresolvedTablesInSelect(insert.query)
       case _ =>
@@ -431,6 +438,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
   private def unresolvedTablesInSelect(plan: LogicalPlan): Seq[TableIdentifier] = {
     val tables = new ArrayBuffer[TableIdentifier]()
 
+    // 定义了一个闭包
     def findUnresolvedTables(plan: LogicalPlan): Unit = {
       plan.foreach {
         case u: UnresolvedRelation =>
@@ -484,6 +492,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
 
   /**
     * set current database
+    * 在初始化MoonboxSession以及USE命令时被调用
     *
     * @param currentDb
     */
@@ -493,6 +502,7 @@ class SparkEngine(conf: MbConf, mbCatalog: MoonboxCatalog) extends MbLogging {
 
   /**
     * drop database from spark session
+    * UNMOUNT/DROP DATABSE时会调用该方法
     *
     * @param db
     * @param ignoreIfNotExists

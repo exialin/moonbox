@@ -46,6 +46,7 @@ class LoginManager(conf: MbConf, mbService: MoonboxService) extends MbLogging {
   private val cleanTimeoutCatalogSessionThread =
     ThreadUtils.newDaemonSingleThreadScheduledExecutor("loginManager-clean-timeout")
 
+  // 登录超时后，关闭Session，调用登录时传入的回调函数
   cleanTimeoutCatalogSessionThread.scheduleAtFixedRate(new Runnable {
     override def run(): Unit = {
       tokenToLastActiveTime.foreach { case (u, t) =>
@@ -85,6 +86,7 @@ class LoginManager(conf: MbConf, mbService: MoonboxService) extends MbLogging {
     tokenToLastActiveTime.remove(token)
   }
 
+  // MoonboxService中的方法都会调用isLogin，从而更新token的活跃时间
   def isLogin(token: String): Option[(String, String)] = {
     if (tokenToLastActiveTime.containsKey(token)) {
       tokenToLastActiveTime.update(token, System.currentTimeMillis())
@@ -108,6 +110,7 @@ class LoginManager(conf: MbConf, mbService: MoonboxService) extends MbLogging {
     case _ => new CatalogLogin(conf, catalog)
   }
 
+  // 被MoonboxService.openSession调用，保存token和sessionId
   def putSession(token: String, sessionId: String): Unit = {
     tokenToSessionId.put(token, sessionId)
   }

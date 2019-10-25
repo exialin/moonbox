@@ -46,6 +46,7 @@ abstract class PersistenceEngine {
 		read[AppInfo]("apps")
 	}
 
+	// 下面的方法在MoonboxMaster中被调用
 	final def addDriver(driver: DriverInfo): Unit = {
 		persist("drivers/" + driver.id, driver)
 	}

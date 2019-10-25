@@ -407,8 +407,10 @@ private[deploy] class MoonboxService(
     }
   }
 
+  // T是返回消息的类型
   private def askSync[T: ClassTag](message: Message)(timeout: FiniteDuration): Either[T, String] = {
     try {
+      // akka消息发送到master
       val future = askAsync(masterRef, message)(Timeout(timeout))
       val result = Await.result(future, timeout).asInstanceOf[T]
       Left(result)

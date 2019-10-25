@@ -91,6 +91,7 @@ class TransportServerProtoHandler(channelToToken: ConcurrentHashMap[Channel, Str
 		ConnectionInfo(local, remote, ConnectionType.CLIENT)
 	}
 
+	// 处理从ProtoNettyClient发送过来的请求
 	private def handleProtoMessage(ctx: ChannelHandlerContext, message: protobuf.ProtoMessage): Unit = {
 		val messageId = message.getMessageId
 		if (message.hasLoginInbound) {
@@ -130,6 +131,7 @@ class TransportServerProtoHandler(channelToToken: ConcurrentHashMap[Channel, Str
 		val username = inbound.getUsername
 		val password = inbound.getPassword
 
+		// 通过MoonboxService的方法实现，第三个参数是一个回调函数，超时后被调用
 		Future(mbService.login(username, password, () => {
 			ctx.close()
 		})) onComplete {

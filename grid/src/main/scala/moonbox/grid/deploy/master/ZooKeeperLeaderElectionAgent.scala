@@ -34,6 +34,7 @@ class ZooKeeperLeaderElectionAgent(val candidate: LeaderElectable,
   private var leaderLatch: LeaderLatch = _
   private var status = LeadershipStatus.NOT_LEADER
 
+  // 在MoonboxMaster中创建对象后开始监听
   start()
 
   private def start() {

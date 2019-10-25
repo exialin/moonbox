@@ -57,6 +57,7 @@ class Runner(
 
 	private var currentRowId: Long = _
 
+	// 查询都是通过MoonboxSessioin
 	private val mbSession = new MoonboxSession(conf, org, username, database, sessionConfig)
 
 	def query(sqls: Seq[String], fetchSize: Int, maxRows: Int): QueryResult = {
@@ -73,7 +74,7 @@ class Runner(
 			case event: AlterTimedEventSetEnable =>
 				alterTimedEvent(event, manager)
 			case runnable: MbRunnableCommand =>
-				// 其他DDL、DML、DCL命令
+				// 其他DDL、DML、DCL命令，调用这些类的run方法
 				val result = runnable.run(mbSession)
 				DirectResult(runnable.outputSchema, result.map(_.toSeq))
 			case CreateTempView(table, query, isCache, replaceIfExists) =>

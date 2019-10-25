@@ -36,6 +36,7 @@ import moonbox.message.protobuf.ProtoMessage
 
 import scala.collection.mutable
 
+// sessionIdToJobRunner是Main的sessionIdToRunner
 class DataFetchServer(host: String, port: Int, conf: MbConf, sessionIdToJobRunner: mutable.Map[String, Runner]) extends MbLogging {
 
   private var channelFuture: ChannelFuture = _

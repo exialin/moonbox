@@ -391,6 +391,7 @@ class MoonboxMaster(
 					requester ! UnregisterTimedEventFailed(e.getMessage)
 			}
 
+		// 从TransportServer发过来的消息，包括OpenSession、CloseSession、JobQuery等
 		case job: JobMessage =>
 			handleJobMessage.apply(job)
 
@@ -405,6 +406,7 @@ class MoonboxMaster(
 
 	private def handleJobMessage: Receive = {
 
+		// JobSubmit是batch任务
 		case JobSubmit(org, username, lang, sqls, userConfig) =>
 			if(state != RecoveryState.ACTIVE) {
 				val msg = s"Current master is not active: $state. Can only accept driver submissions in ALIVE state."
@@ -479,6 +481,7 @@ class MoonboxMaster(
 		case open @ OpenSession(_, _, _, config) =>
 			val requester = sender()
 			val centralized = config.get("islocal").exists(_.equalsIgnoreCase("true"))
+			// 选择一个App
 			val appLabel = config.getOrElse("spark.app.label", "common")
 			val candidate = selectApplication(centralized, appLabel)
 			candidate match {
@@ -523,6 +526,7 @@ class MoonboxMaster(
 			val requester = sender()
 			sessionIdToApp.get(query.sessionId) match {
 				case Some(app) =>
+					// 将查询转发到App
 					app.endpoint forward query
 				case None =>
 					requester ! JobQueryResponse(success = false, "", Seq.empty, hasNext = false,
@@ -533,6 +537,7 @@ class MoonboxMaster(
 			val requester = sender()
 			sessionIdToApp.get(sessionId) match {
 				case Some(app) =>
+					// ask方法将cancel消息发送给App
 					val f = app.endpoint.ask(cancel).mapTo[InteractiveJobCancelResponse]
 					f.onComplete {
 						case Success(response) =>

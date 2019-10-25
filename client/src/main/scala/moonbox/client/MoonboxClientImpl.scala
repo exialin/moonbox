@@ -114,6 +114,7 @@ private[client] class MoonboxClientImpl(config: CaseInsensitiveMap[String]) exte
 
 	override def userInfo = throw new Exception("Unsupported temporarily.")
 
+	// 下面的方法只在JavaMoonboxClient中被调用
 	override def listDatabases = {
 		val rowSet = interactiveQuery("show databases" :: Nil)
 		val databases = ArrayBuffer.empty[String]
@@ -178,6 +179,7 @@ private[client] class MoonboxClientImpl(config: CaseInsensitiveMap[String]) exte
 		interactiveQuery(interactiveSql, fetchSize, getMaxRows, milliseconds)
 	}
 
+	// 上面的都是调用这个方法
 	override def interactiveQuery(interactiveSql: Seq[String], fetchSize: Int, maxRows: Int, milliseconds: Int) = {
 		checkActive(_client)
 		checkActive(_dataFetchClient)

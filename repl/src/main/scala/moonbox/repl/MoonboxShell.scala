@@ -42,6 +42,7 @@ object MoonboxShell {
 	private var timeout: Int = 60 * 60
 	// unit: second
 	private var islocal: Boolean = _
+	// 从moonbox-env.sh中设置的环境变量获取
 	private var host: String = sys.env.getOrElse("MOONBOX_MASTER_HOST", "localhost")
 	private var port: Int = Utils.getJdbcDefaultPort()
 	private var user: String = _

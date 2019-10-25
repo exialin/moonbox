@@ -41,6 +41,7 @@ class MoonboxSession(
 
 	val catalog = new MoonboxCatalog(conf).setCurrentUser(org, username)
 
+	// 通过SparkEngine执行查询
 	val engine = new SparkEngine(conf, catalog)
 
 	initializeDatabase()
@@ -50,6 +51,7 @@ class MoonboxSession(
 	}
 
 	// 用Moonbox实现的解析器对SQL进行解析，返回MbCommand对象
+	// 在CommandChecker.check中检查权限
 	def parsedCommand(sql: String): MbCommand = {
 		val command = parser.parsePlan(sql)
 		CommandChecker.check(command, catalog)
@@ -72,10 +74,12 @@ class MoonboxSession(
 		}
 	}
 
+	// 被ShowSchema.run调用，对应SHOW SCHEMA FOR语句
 	def sqlSchema(sql: String): StructType = {
 		engine.sqlSchema(sql)
 	}
 
+	// 被DescTable和GrantResourceToUser的run方法调用
 	def tableSchema(table: String, database: String): StructType = {
 		val catalogTable = catalog.getTable(database, table)
 		if (catalogTable.tableType == CatalogTableType.TABLE) {
@@ -85,6 +89,7 @@ class MoonboxSession(
 		}
 	}
 
+	// 创建MoonboxSession对象时被调用，在SparkSession中调用CREATE DATABASE创建数据库
 	private def initializeDatabase(): Unit = {
 		defaultDb.foreach { db =>
 			catalog.setCurrentDb(db)

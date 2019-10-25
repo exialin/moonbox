@@ -234,6 +234,7 @@ case class ShowCreateTable(table: TableIdentifier) extends MbRunnableCommand wit
 	}
 }
 
+// SHOW SCHEMA FOR 语句
 case class ShowSchema(sql: String) extends MbRunnableCommand with DML {
 
 	override def output: Seq[Attribute] = {
@@ -457,6 +458,7 @@ case class Explain(query: String, extended: Boolean = false) extends MbRunnableC
 // 注意下面的类扩展的是MbCommand，在Runner.query方法中会进入不同的case
 case class MQLQuery(query: String) extends MbCommand with DML
 
+// 不应该归类为DML
 case class CreateTempView(
 	name: String,
 	query: String,

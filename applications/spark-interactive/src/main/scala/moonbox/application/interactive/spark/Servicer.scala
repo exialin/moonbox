@@ -34,6 +34,7 @@ import org.json4s.native.Serialization.write
 
 import scala.collection.mutable.ArrayBuffer
 
+// 查询不会用到这类
 class Servicer(
                 org: String,
                 username: String,

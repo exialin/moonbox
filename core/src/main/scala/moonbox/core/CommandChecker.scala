@@ -24,6 +24,7 @@ import moonbox.common.MbLogging
 import moonbox.core.command._
 
 // 在MoonboxSession.parsedCommand方法中被调用，检查用户权限
+// 这里检查的都是Moonbox扩展的命令，不包括SELECT
 object CommandChecker extends MbLogging {
 
 	private def require(condition: Boolean, message: String): Unit = {
@@ -49,14 +50,16 @@ object CommandChecker extends MbLogging {
 
 	private def notOrganization(cmd: MbCommand, catalog: MoonboxCatalog): Unit = cmd match {
 		case account: Account =>
-      // GRANT ACCOUNT命令需要有相应权限
+      // CREATE/ALTER/DROP/DESC/SHOW USER等USER相关命令需要有Account权限
 			require(catalog.catalogUser.account, "Permission denied.")
 
 		case ddl: DDL =>
 			require(catalog.catalogUser.ddl, "Permission denied.")
 
+		// DML语句现在没有检查权限！包括USER、SHOW、DESC命令
 		case dml: DML =>
 
+		// GRANT/REVOKE SELECT 命令
 		case GrantResourceToUser(_, _, _)
 				 | RevokeResourceFromUser(_, _, _)
 				 | GrantResourceToGroup(_, _, _)
@@ -64,6 +67,7 @@ object CommandChecker extends MbLogging {
 
 			require(catalog.catalogUser.dcl, "Permission denied.")
 
+		// 只有SA能执行GRANT GRANT 语句
 		case GrantGrantToUser(_, _)
 				 | RevokeGrantFromUser(_, _)
 				 | GrantGrantToGroup(_, _)
@@ -71,6 +75,7 @@ object CommandChecker extends MbLogging {
 
 			require(catalog.catalogUser.isSA, "Permission denied.")
 
+		// GRANT {ACCOUNT | DDL | DCL} 命令
 		case GrantPrivilegeToUser(privileges, _)  =>
 
 			require(

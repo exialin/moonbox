@@ -20,6 +20,7 @@
 
 package moonbox.core.command
 
+// dml.scala最后几个类和system.scala中的类实现的是这个特质，而不是MbRunnableCommand
 trait MbCommand {
 
 }

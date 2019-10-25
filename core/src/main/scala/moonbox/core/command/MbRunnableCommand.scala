@@ -29,6 +29,7 @@ trait MbRunnableCommand extends MbCommand {
 	final def outputSchema: String = {
 		StructType(output.map(a => StructField(a.name, a.dataType, a.nullable, a.metadata))).json
 	}
+	// output是一些命令返回结果的schema
 	def output: Seq[Attribute] = Seq.empty
 	def run(mbSession: MoonboxSession): Seq[Row]
 }

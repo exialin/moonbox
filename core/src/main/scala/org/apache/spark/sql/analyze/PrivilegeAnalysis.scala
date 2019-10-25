@@ -18,6 +18,7 @@ class PrivilegeAnalysis(catalog: MoonboxCatalog) extends Rule[LogicalPlan] {
 	// 检查库、表、列的权限
 	override def apply(plan: LogicalPlan): LogicalPlan = {
 
+		// SA具有所有权限，直接返回
 		if (catalog.catalogUser.isSA) {
 			return plan
 		}
@@ -42,6 +43,7 @@ class PrivilegeAnalysis(catalog: MoonboxCatalog) extends Rule[LogicalPlan] {
 	}
 
 	private def checkInsert(identifier: TableIdentifier) = {
+		// 如果不是db.table的形式，则返回当前数据库
 		val db = identifier.database.getOrElse(catalog.getCurrentDb)
 		val tb = identifier.table
 		val canInsert = isOwner(db, tb) || isDatabaseGranted(db, InsertPrivilege.NAME) || isTableGranted(db, tb, InsertPrivilege.NAME)
@@ -59,6 +61,7 @@ class PrivilegeAnalysis(catalog: MoonboxCatalog) extends Rule[LogicalPlan] {
 
 		val availables = new ArrayBuffer[AttributeSet]()
 
+		// TODO: 这里的references是什么？
 		foreach(queryPlan) {
 			// do not change case order
 			case view: View =>
@@ -121,8 +124,11 @@ class PrivilegeAnalysis(catalog: MoonboxCatalog) extends Rule[LogicalPlan] {
 		owner.map(_.toLowerCase).contains(catalog.getCurrentUser.toLowerCase)
 	}
 
+	// 将标识符用反引号括起来
 	private def normalizeIdentifier(catalogTable: CatalogTable): CatalogTable = {
+		// Spark的TableIdentifier类
 		val ident = catalogTable.identifier
+		// CatalogTable和TableIdentifier是样例类，会自动生成一个copy方法，复制时可以修改某些字段
 		val normalizedIdent = ident.copy(database = Some(ident.database.getOrElse(catalog.getCurrentDb)))
 		catalogTable.copy(identifier = normalizedIdent)
 	}
